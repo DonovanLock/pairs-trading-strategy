@@ -1,13 +1,15 @@
-from fetch_data import get_correlated_pairs, get_market_data
+from fetch_data import get_cointegrated_pairs, get_correlated_pairs, get_market_data, get_returns
 
 def main():
-    #All of these are aerospace/defence companies listed on the LSE.
-    tickers = ['AVON.L', 'BA.L', 'BAB.L', 'CHG.L', 'CHRT.L',
-               'MRO.L', 'QQ.L', 'RR.L', 'SNR.L']
-    
+    tickers = ['AAPL', 'AZN', 'BARC.L', 'BP.L', 'F', 'GM', 'GSK',
+               'KO', 'LLOY.L', 'MSFT', 'PEP', 'SHEL.L', 'TGT', 'WMT']
+
     market_data = get_market_data(tickers)
-    correlated_pairs = get_correlated_pairs(market_data)
-    print(str(correlated_pairs))
+    market_returns = get_returns(market_data)
+    correlated_pairs = get_correlated_pairs(market_returns)
+    print(correlated_pairs)
+    cointegrated_pairs = get_cointegrated_pairs(correlated_pairs, market_data)
+    print(cointegrated_pairs)
 
 if __name__ == '__main__':
     main()
