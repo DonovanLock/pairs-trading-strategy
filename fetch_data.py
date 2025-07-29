@@ -1,5 +1,6 @@
 import sys
 import pandas as pd
+import statsmodels.api as sm
 from statsmodels.tsa.stattools import coint
 import numpy as np
 import yfinance as yf
@@ -15,7 +16,7 @@ def get_market_data(tickers):
     if failed_tickers:
         sys.exit("Failed to download market data for: " + str(failed_tickers))
 
-    #for this to work with a vpn, i need to switch country every time it runs?
+    # for this to work with a vpn, i need to switch country every time it runs?
     if 'Adj Close' in historic_data.columns:
         adjusted_data = historic_data['Adj Close']
     else:
@@ -36,6 +37,7 @@ def get_correlated_pairs(returns):
     return correlated_pairs
 
 def get_cointegrated_pairs(correlated_pairs, market_data):
+    # list of cointegrated pairs and a cleaned dataframe containing their returns
     cointegrated_pairs = []
     for pair in correlated_pairs:
         stock1 = market_data[pair[0]]
@@ -46,10 +48,33 @@ def get_cointegrated_pairs(correlated_pairs, market_data):
         if len(cleaned_stocks) == 0:
             continue
 
+        # Engle-Granger two-step cointegration test
         cointegration_test = coint(cleaned_stocks.iloc[:, 0], cleaned_stocks.iloc[:, 1])
         p_value = cointegration_test[1]
 
         if p_value <= COINTEGRATION_THRESHOLD:
-            cointegrated_pairs.append(pair)
-        
+            # there exists some beta (hedge ratio) such that
+            # stock1 - beta * stock2 is a stationary series
+            cointegrated_pairs.append([pair, cleaned_stocks])
+
     return cointegrated_pairs
+
+def calculate_hedge_ratio(dependent_stock, independent_stock):
+    X = sm.add_constant(independent_stock)
+    model = sm.OLS(dependent_stock, X).fit()
+
+    # dependent_stock = constant + hedge_ratio * stock2 + epsilon,
+    # where epsilon is a stationary series. As a result,
+    # dependent_stock - hedge_ratio * independent_stock is stationary
+    hedge_ratio = model.params[independent_stock.name]
+
+    return hedge_ratio
+
+def get_hedge_ratios(pair_prices):
+    stock1 = pair_prices.iloc[:, 0]
+    stock2 = pair_prices.iloc[:, 1]
+
+    beta1 = calculate_hedge_ratio(stock1, stock2)
+    beta2 = calculate_hedge_ratio(stock2, stock1)    
+
+    return (beta1, beta2)
