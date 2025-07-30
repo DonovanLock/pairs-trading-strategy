@@ -1,10 +1,10 @@
 import sys
 import pandas as pd
 import statsmodels.api as sm
-from statsmodels.tsa.stattools import coint
+from statsmodels.tsa.stattools import adfuller, coint
 import numpy as np
 import yfinance as yf
-from utils import get_upper_triangle_of_matrix
+from utils import get_columns_from_pair_data, get_upper_triangle_of_matrix
 
 CORRELATION_THRESHOLD = 0.6
 COINTEGRATION_THRESHOLD = 0.05
@@ -14,7 +14,7 @@ def get_market_data(tickers):
 
     failed_tickers = list(yf.shared._ERRORS.keys())
     if failed_tickers:
-        sys.exit("Failed to download market data for: " + str(failed_tickers))
+        sys.exit('Failed to download market data for: ' + str(failed_tickers))
 
     # for this to work with a vpn, i need to switch country every time it runs?
     if 'Adj Close' in historic_data.columns:
@@ -49,7 +49,7 @@ def get_cointegrated_pairs(correlated_pairs, market_data):
             continue
 
         # Engle-Granger two-step cointegration test
-        cointegration_test = coint(cleaned_stocks.iloc[:, 0], cleaned_stocks.iloc[:, 1])
+        cointegration_test = coint(*get_columns_from_pair_data(cleaned_stocks))
         p_value = cointegration_test[1]
 
         if p_value <= COINTEGRATION_THRESHOLD:
@@ -63,7 +63,7 @@ def calculate_hedge_ratio(dependent_stock, independent_stock):
     X = sm.add_constant(independent_stock)
     model = sm.OLS(dependent_stock, X).fit()
 
-    # dependent_stock = constant + hedge_ratio * stock2 + epsilon,
+    # dependent_stock = constant + hedge_ratio * independent_stock + epsilon,
     # where epsilon is a stationary series. As a result,
     # dependent_stock - hedge_ratio * independent_stock is stationary
     hedge_ratio = model.params[independent_stock.name]
@@ -71,10 +71,24 @@ def calculate_hedge_ratio(dependent_stock, independent_stock):
     return hedge_ratio
 
 def get_hedge_ratios(pair_prices):
-    stock1 = pair_prices.iloc[:, 0]
-    stock2 = pair_prices.iloc[:, 1]
+    stock1, stock2 = get_columns_from_pair_data(pair_prices)
 
     beta1 = calculate_hedge_ratio(stock1, stock2)
     beta2 = calculate_hedge_ratio(stock2, stock1)    
 
     return (beta1, beta2)
+
+#
+def get_best_spread(cointegrated_pair, hedge_ratios):
+    stock1, stock2 = get_columns_from_pair_data(cointegrated_pair[1])
+
+    spread1 = stock1 - hedge_ratios[0] * stock2
+    spread2 = stock2 - hedge_ratios[1] * stock1
+
+    p_value1 = adfuller(spread1)[1]
+    p_value2 = adfuller(spread2)[1]
+
+    if p_value1 < p_value2:
+        return spread1, p_value1, hedge_ratios[0], cointegrated_pair[0][0], cointegrated_pair[0][1]
+    else:
+        return spread2, p_value2, hedge_ratios[1], cointegrated_pair[0][1], cointegrated_pair[0][0]
