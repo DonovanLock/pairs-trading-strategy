@@ -1,5 +1,6 @@
-from fetch_data import get_best_spread, get_cointegrated_pairs, get_correlated_pairs, get_hedge_ratios, get_market_data, get_returns
-import matplotlib.pyplot as plt
+from fetch_data import get_best_spread, get_cointegrated_pairs, get_correlated_pairs, get_hedge_ratios, get_market_data, get_returns, get_z_score
+from graph_data import graph_pair_trades
+from utils import get_columns_from_pair_data
 
 def main():
     tickers = ['AAPL', 'AZN', 'BARC.L', 'BP.L', 'F', 'GM', 'GSK',
@@ -8,20 +9,20 @@ def main():
     market_data = get_market_data(tickers)
     market_returns = get_returns(market_data)
     correlated_pairs = get_correlated_pairs(market_returns)
-    cointegrated_pairs = get_cointegrated_pairs(correlated_pairs, market_data)
+    cointegrated_pairs_data = get_cointegrated_pairs(correlated_pairs, market_data)
 
-    for cointegrated_pair in cointegrated_pairs:
-        hedge_ratios = get_hedge_ratios(cointegrated_pair[1])
+    for [[stock1, stock2], pair_data] in cointegrated_pairs_data:
+        stock1_data, stock2_data = get_columns_from_pair_data(pair_data)
+        hedge_ratios = get_hedge_ratios(stock1_data, stock2_data)
         
-        best_spread, best_p_value, best_hedge_ratio, dependent_stock, independent_stock = get_best_spread(cointegrated_pair, hedge_ratios)
+        best_spread, best_p_value, best_hedge_ratio, dependent_stock, independent_stock = get_best_spread(stock1, stock2, stock1_data, stock2_data, hedge_ratios)
         if best_p_value > 0.05:
             continue # not stationary
 
         print(f'Using {dependent_stock} - {best_hedge_ratio} * {independent_stock} as a stationary spread')
-        plt.plot(best_spread.index, best_spread.values, label='Spread')
-        plt.show()
-        
-        
+
+        z_score = get_z_score(best_spread)
+        graph_pair_trades(stock1, stock2, stock1_data, stock2_data, z_score)     
 
 if __name__ == '__main__':
     main()

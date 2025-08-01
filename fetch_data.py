@@ -70,25 +70,29 @@ def calculate_hedge_ratio(dependent_stock, independent_stock):
 
     return hedge_ratio
 
-def get_hedge_ratios(pair_prices):
-    stock1, stock2 = get_columns_from_pair_data(pair_prices)
+def get_hedge_ratios(stock1_data, stock2_data):
 
-    beta1 = calculate_hedge_ratio(stock1, stock2)
-    beta2 = calculate_hedge_ratio(stock2, stock1)    
+    beta1 = calculate_hedge_ratio(stock1_data, stock2_data)
+    beta2 = calculate_hedge_ratio(stock2_data, stock1_data)    
 
     return (beta1, beta2)
 
 #
-def get_best_spread(cointegrated_pair, hedge_ratios):
-    stock1, stock2 = get_columns_from_pair_data(cointegrated_pair[1])
+def get_best_spread(stock1, stock2, stock1_data, stock2_data, hedge_ratios):
 
-    spread1 = stock1 - hedge_ratios[0] * stock2
-    spread2 = stock2 - hedge_ratios[1] * stock1
+    spread1 = stock1_data - hedge_ratios[0] * stock2_data
+    spread2 = stock2_data - hedge_ratios[1] * stock1_data
 
     p_value1 = adfuller(spread1)[1]
     p_value2 = adfuller(spread2)[1]
 
     if p_value1 < p_value2:
-        return spread1, p_value1, hedge_ratios[0], cointegrated_pair[0][0], cointegrated_pair[0][1]
+        return spread1, p_value1, hedge_ratios[0], stock1, stock2
     else:
-        return spread2, p_value2, hedge_ratios[1], cointegrated_pair[0][1], cointegrated_pair[0][0]
+        return spread2, p_value2, hedge_ratios[1], stock2, stock1
+
+def get_z_score(spread):
+    mean = spread.mean()
+    stdev = spread.std()
+    z_score = (spread - mean) / stdev
+    return z_score
