@@ -4,7 +4,7 @@ import statsmodels.api as sm
 from statsmodels.tsa.stattools import adfuller, coint
 import numpy as np
 import yfinance as yf
-from utils import get_columns_from_pair_data, get_upper_triangle_of_matrix
+from utils import get_upper_triangle_of_matrix
 
 CORRELATION_THRESHOLD = 0.6
 COINTEGRATION_THRESHOLD = 0.05
@@ -50,7 +50,7 @@ def get_cointegrated_pairs(correlated_pairs, market_data):
             continue
 
         # Engle-Granger two-step cointegration test
-        cointegration_test = coint(*get_columns_from_pair_data(cleaned_stocks))
+        cointegration_test = coint(cleaned_stocks[pair[0]], cleaned_stocks[pair[1]])
         p_value = cointegration_test[1]
 
         if p_value <= COINTEGRATION_THRESHOLD:
@@ -78,11 +78,10 @@ def get_hedge_ratios(stock1_data, stock2_data):
 
     return (beta1, beta2)
 
-#
-def get_best_spread(stock1, stock2, stock1_data, stock2_data, hedge_ratios):
+def get_best_spread(stock1, stock2, pair_data, hedge_ratios):
 
-    spread1 = stock1_data - hedge_ratios[0] * stock2_data
-    spread2 = stock2_data - hedge_ratios[1] * stock1_data
+    spread1 = pair_data[stock1] - hedge_ratios[0] * pair_data[stock2]
+    spread2 = pair_data[stock2] - hedge_ratios[1] * pair_data[stock1]
 
     p_value1 = adfuller(spread1)[1]
     p_value2 = adfuller(spread2)[1]

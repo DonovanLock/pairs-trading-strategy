@@ -1,20 +1,20 @@
 import matplotlib.pyplot as plt
+from trading_signals import ENTRY_THRESHOLD, EXIT_THRESHOLD
 
-ENTRY_THRESHOLD = 2
-
-def graph_pair_trades(stock1, stock2, stock1_data, stock2_data, z_score):
+def graph_pair_trades(stock1, stock2, pair_data):
     fig = plt.figure()
+    z_score = pair_data['Z-score']
     start_date = z_score.first_valid_index()
-    graph_stocks(fig, stock1, stock2, stock1_data, stock2_data, start_date)
+    graph_stocks(fig, stock1, stock2, pair_data, start_date)
     graph_z_score(fig, z_score, start_date)
     fig.tight_layout()
     plt.show()
 
-def graph_stocks(fig, stock1, stock2, stock1_data, stock2_data, start_date):
+def graph_stocks(fig, stock1, stock2, pair_data, start_date):
     pair_graph = fig.add_subplot(211)
-    pair_graph.plot(stock1_data.index, stock1_data.values, label=stock1, color='blue')
-    pair_graph.plot(stock2_data.index, stock2_data.values, label=stock2, color='green')
-    pair_graph.set_xlim([start_date, stock1_data.index[-1]])
+    pair_graph.plot(pair_data[stock1].index, pair_data[stock1].values, label=stock1, color='blue')
+    pair_graph.plot(pair_data[stock2].index, pair_data[stock2].values, label=stock2, color='green')
+    pair_graph.set_xlim([start_date, pair_data[stock1].index[-1]])
     plt.title("Stock prices")
     plt.legend()
     plt.xticks(rotation=30)
@@ -25,7 +25,9 @@ def graph_z_score(fig, z_score, start_date):
     z_score_graph.set_xlim([start_date, z_score.index[-1]])
     z_score_graph_bound = z_score.abs().max() * 1.1
     z_score_graph.set_ylim(-z_score_graph_bound, z_score_graph_bound)
-    z_score_graph.axhline(0, color='grey', linestyle='--')
+    z_score_graph.axhline(EXIT_THRESHOLD, color='grey', linestyle='--')
+    if EXIT_THRESHOLD > 0:
+        z_score_graph.axhline(-EXIT_THRESHOLD, color='grey', linestyle='--')
     z_score_graph.axhline(ENTRY_THRESHOLD, color='red', linestyle='--')
     z_score_graph.axhline(-ENTRY_THRESHOLD, color='red', linestyle='--')
     plt.title("Z-score")
