@@ -8,6 +8,7 @@ from utils import get_columns_from_pair_data, get_upper_triangle_of_matrix
 
 CORRELATION_THRESHOLD = 0.6
 COINTEGRATION_THRESHOLD = 0.05
+ROLLING_WINDOW = 30
 
 def get_market_data(tickers):
     historic_data = yf.download(tickers=tickers, period='3y', auto_adjust=False, progress=False)
@@ -92,7 +93,7 @@ def get_best_spread(stock1, stock2, stock1_data, stock2_data, hedge_ratios):
         return spread2, p_value2, hedge_ratios[1], stock2, stock1
 
 def get_z_score(spread):
-    mean = spread.mean()
-    stdev = spread.std()
-    z_score = (spread - mean) / stdev
+    rolling_mean = spread.rolling(window=ROLLING_WINDOW).mean()
+    rolling_stdev = spread.rolling(window=ROLLING_WINDOW).std()
+    z_score = (spread - rolling_mean) / rolling_stdev
     return z_score

@@ -2,6 +2,10 @@ from fetch_data import get_best_spread, get_cointegrated_pairs, get_correlated_p
 from graph_data import graph_pair_trades
 from utils import get_columns_from_pair_data
 
+#after implementing backtesting:
+#tune several parameters and gauge sharpe ratio to select best combination
+#parameters to tune:
+#ENTRY_THRESHOLD, ROLLING_WINDOW
 def main():
     tickers = ['AAPL', 'AZN', 'BARC.L', 'BP.L', 'F', 'GM', 'GSK',
                'KO', 'LLOY.L', 'MSFT', 'PEP', 'SHEL.L', 'TGT', 'WMT']
