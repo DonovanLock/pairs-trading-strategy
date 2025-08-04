@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
-from trading_signals import ENTRY_THRESHOLD, EXIT_THRESHOLD
+
+from config import ENTRY_THRESHOLD, EXIT_THRESHOLD
 
 def graph_pair_trades(stock1, stock2, pair_data):
     fig = plt.figure()
@@ -7,20 +8,21 @@ def graph_pair_trades(stock1, stock2, pair_data):
     start_date = z_score.first_valid_index()
     graph_stocks(fig, stock1, stock2, pair_data, start_date)
     graph_z_score(fig, z_score, start_date)
+    graph_capital(fig, pair_data, start_date)
     fig.tight_layout()
     plt.show()
 
 def graph_stocks(fig, stock1, stock2, pair_data, start_date):
-    pair_graph = fig.add_subplot(211)
+    pair_graph = fig.add_subplot(311)
     pair_graph.plot(pair_data[stock1].index, pair_data[stock1].values, label=stock1, color='blue')
-    pair_graph.plot(pair_data[stock2].index, pair_data[stock2].values, label=stock2, color='green')
+    pair_graph.plot(pair_data[stock2].index, pair_data[stock2].values, label=stock2, color='orange')
     pair_graph.set_xlim([start_date, pair_data[stock1].index[-1]])
     plt.title("Stock prices")
     plt.legend()
     plt.xticks(rotation=30)
 
 def graph_z_score(fig, z_score, start_date):
-    z_score_graph = fig.add_subplot(212)
+    z_score_graph = fig.add_subplot(312)
     z_score_graph.plot(z_score.index, z_score.values, label='Z-Score', color='black')
     z_score_graph.set_xlim([start_date, z_score.index[-1]])
     z_score_graph_bound = z_score.abs().max() * 1.1
@@ -31,4 +33,12 @@ def graph_z_score(fig, z_score, start_date):
     z_score_graph.axhline(ENTRY_THRESHOLD, color='red', linestyle='--')
     z_score_graph.axhline(-ENTRY_THRESHOLD, color='red', linestyle='--')
     plt.title("Z-score")
+    plt.xticks(rotation=30)
+
+def graph_capital(fig, pair_data, start_date):
+    capital_graph = fig.add_subplot(313)
+    capital = pair_data['Capital']
+    capital_graph.plot(capital.index, capital.values, label='Capital', color='green')
+    capital_graph.set_xlim([start_date, capital.index[-1]])
+    plt.title('Capital')
     plt.xticks(rotation=30)

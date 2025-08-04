@@ -1,14 +1,12 @@
-import sys
+import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 from statsmodels.tsa.stattools import adfuller, coint
-import numpy as np
+import sys
 import yfinance as yf
-from utils import get_upper_triangle_of_matrix
 
-CORRELATION_THRESHOLD = 0.6
-COINTEGRATION_THRESHOLD = 0.05
-ROLLING_WINDOW = 30
+from config import COINTEGRATION_THRESHOLD, CORRELATION_THRESHOLD, ROLLING_WINDOW
+from utils import get_upper_triangle_of_matrix
 
 def get_market_data(tickers):
     historic_data = yf.download(tickers=tickers, period='3y', auto_adjust=False, progress=False)
@@ -76,7 +74,7 @@ def get_hedge_ratios(stock1_data, stock2_data):
     beta1 = calculate_hedge_ratio(stock1_data, stock2_data)
     beta2 = calculate_hedge_ratio(stock2_data, stock1_data)    
 
-    return (beta1, beta2)
+    return beta1, beta2
 
 def get_best_spread(stock1, stock2, pair_data, hedge_ratios):
 

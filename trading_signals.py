@@ -1,8 +1,7 @@
 from enum import IntEnum
 import pandas as pd
 
-ENTRY_THRESHOLD = 2
-EXIT_THRESHOLD = 0
+from config import ENTRY_THRESHOLD, EXIT_THRESHOLD
 
 class Position(IntEnum):
     FLAT = 0
@@ -21,25 +20,25 @@ class Signal(IntEnum):
 def classify_position(position, previous_z_score, current_z_score):
     new_position = position
     if position == Position.FLAT:
-        # Enter long position
         if current_z_score <= -ENTRY_THRESHOLD < previous_z_score:
+        # Enter long position
             new_position = Position.LONG
-        # Enter short position
         elif current_z_score >= ENTRY_THRESHOLD > previous_z_score:
+        # Enter short position
             new_position = Position.SHORT
     elif position == Position.LONG:
-        # Reversal to short position
         if current_z_score >= ENTRY_THRESHOLD > previous_z_score:
+        # Reversal to short position
             new_position = Position.SHORT
-        # Exit long position
         elif current_z_score >= -EXIT_THRESHOLD > previous_z_score:
+        # Exit long position
             new_position = Position.FLAT
     elif position == Position.SHORT:
-        # Reversal to long position
         if current_z_score <= -ENTRY_THRESHOLD < previous_z_score:
+        # Reversal to long position
             new_position = Position.LONG
-        # Exit short position
         elif current_z_score <= EXIT_THRESHOLD < previous_z_score:
+        # Exit short position
             new_position = Position.FLAT
 
     return Position(new_position)
@@ -50,8 +49,6 @@ def get_positions(z_score):
     position = Position.FLAT
 
     for i in range(1, len(z_score_entries)):
-        #TODO: what about large jumps in z-score? e.g. <-ENTRY_THRESHOLD to >ENTRY_THRESHOLD
-        #i.e. two different positions are arguable true at the same time...
         previous_z_score = z_score_entries.iloc[i-1]
         current_z_score = z_score_entries.iloc[i]
         position = classify_position(position, previous_z_score, current_z_score)

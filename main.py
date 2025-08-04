@@ -1,11 +1,11 @@
-from fetch_data import ROLLING_WINDOW, get_best_spread, get_cointegrated_pairs, get_correlated_pairs, get_hedge_ratios, get_market_data, get_returns, get_z_score
+from backtesting import get_capital
+from config import ROLLING_WINDOW
+from fetch_data import get_best_spread, get_cointegrated_pairs, get_correlated_pairs, get_hedge_ratios, get_market_data, get_returns, get_z_score
 from graph_data import graph_pair_trades
 from trading_signals import get_positions, get_signals
 
 #after implementing backtesting:
 #tune several parameters and gauge sharpe ratio to select best combination
-#parameters to tune:
-#ENTRY_THRESHOLD, ROLLING_WINDOW, NOTIONAL_VALUE_PROPORTION_PER_LEG
 
 def main():
     tickers = ['AAPL', 'AZN', 'BARC.L', 'BP.L', 'F', 'GM', 'GSK',
@@ -13,7 +13,7 @@ def main():
 
     market_data = get_market_data(tickers)
     market_returns = get_returns(market_data)
-    correlated_pairs = get_correlated_pairs(market_returns)
+    correlated_pairs = get_correlated_pairs(market_returns) # this ensures all hedge ratios are positive
     cointegrated_pairs_data = get_cointegrated_pairs(correlated_pairs, market_data)
 
     for [[stock1, stock2], pair_data] in cointegrated_pairs_data:
@@ -27,8 +27,9 @@ def main():
         pair_data['Z-score'] = get_z_score(pair_data['Spread'])
         pair_data['Position'] = get_positions(pair_data['Z-score'].dropna())
         pair_data['Signal'] = get_signals(pair_data['Position'])
+        pair_data['Capital'] = get_capital(pair_data[dependent_stock], pair_data[independent_stock],
+                                           pair_data['Position'], pair_data['Signal'], best_hedge_ratio)
 
-        print(pair_data.iloc[ROLLING_WINDOW-1:].head(60))
         graph_pair_trades(stock1, stock2, pair_data)
 
 if __name__ == '__main__':
