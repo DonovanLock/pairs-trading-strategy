@@ -1,4 +1,4 @@
-from backtesting import get_capital
+from backtesting import get_capital, get_sharpe_ratio
 from config import ROLLING_WINDOW
 from fetch_data import get_best_spread, get_cointegrated_pairs, get_correlated_pairs, get_hedge_ratios, get_market_data, get_returns, get_z_score
 from graph_data import graph_pair_trades
@@ -27,9 +27,9 @@ def main():
         pair_data['Z-score'] = get_z_score(pair_data['Spread'])
         pair_data['Position'] = get_positions(pair_data['Z-score'].dropna())
         pair_data['Signal'] = get_signals(pair_data['Position'])
-        pair_data['Capital'] = get_capital(pair_data[dependent_stock], pair_data[independent_stock],
+        pair_data['Capital'], pair_data['Invested'] = get_capital(pair_data[dependent_stock], pair_data[independent_stock],
                                            pair_data['Position'], pair_data['Signal'], best_hedge_ratio)
-
+        sharpe_ratio = get_sharpe_ratio(pair_data['Invested'])
         graph_pair_trades(stock1, stock2, pair_data)
 
 if __name__ == '__main__':

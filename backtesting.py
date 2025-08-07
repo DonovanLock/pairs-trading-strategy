@@ -1,6 +1,6 @@
 import pandas as pd
 
-from config import PORTFOLIO_PORTION_INVESTED_PER_TRADE, STARTING_CAPITAL
+from config import ANNUAL_TRADING_DAYS, PORTFOLIO_PORTION_INVESTED_PER_TRADE, RISK_FREE_RATE, STARTING_CAPITAL
 from trading_signals import Position, Signal
 
 #reminder: dependent stock - hedge ratio * independent stock = stationary spread
@@ -38,6 +38,7 @@ def get_capital(dependent_stock, independent_stock,
                 positions, signals, hedge_ratio):
     signal_entries = signals.dropna()
     capital = pd.Series(index=signal_entries.index)
+    invested_capital = pd.Series(index=signal_entries.index)
     current_capital = STARTING_CAPITAL # current_capital = idle_capital + long_market_value + short_market_value
     long_shares, short_shares, short_entry_price, idle_capital = reset_to_flat_position(current_capital)
 
@@ -101,5 +102,15 @@ def get_capital(dependent_stock, independent_stock,
                                                                   long_shares, short_shares, short_entry_price)
         
         capital[i] = current_capital
+        invested_capital[i] = current_capital - idle_capital
     
-    return capital
+    return capital, invested_capital
+
+def get_sharpe_ratio(invested_capital):
+    invested_returns = invested_capital.pct_change().dropna()
+    valid_returns = invested_returns[(invested_capital.shift(1) > 0) & (invested_capital > 0)]
+    risk_free_rate = RISK_FREE_RATE / ANNUAL_TRADING_DAYS
+    mean_return = valid_returns.mean()
+    stdev_return = valid_returns.std()
+    sharpe_ratio = (mean_return - risk_free_rate) / stdev_return
+    return sharpe_ratio
