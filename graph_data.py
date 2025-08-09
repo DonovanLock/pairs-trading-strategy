@@ -47,5 +47,5 @@ def graph_capital(fig, pair_data, start_date):
 
 def save_graph(stock1, stock2):
     working_directory = Path(__file__).parent
-    graph_file_name = working_directory / f'graphs_{stock1}_{stock2}'
+    graph_file_name = working_directory / 'output' / f'graphs_{stock1}_{stock2}'
     plt.savefig(graph_file_name)

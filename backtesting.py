@@ -114,3 +114,6 @@ def get_sharpe_ratio(invested_capital):
     stdev_return = valid_returns.std()
     sharpe_ratio = (mean_return - risk_free_rate) / stdev_return
     return sharpe_ratio
+
+def get_roi(ending_capital):
+    return (ending_capital - STARTING_CAPITAL) / STARTING_CAPITAL * 100
