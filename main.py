@@ -1,5 +1,5 @@
 import sys
-from backtesting import test
+from backtesting import get_roi, get_sharpe_ratio, perform_backtest
 from fetch_data import get_best_spread, get_cointegrated_pairs, get_correlated_pairs, get_hedge_ratios, get_market_data, get_returns, get_z_score
 from graph_data import graph_pair_trades
 from tickers import TICKERS
@@ -29,24 +29,10 @@ def main():
         pair.data['Position'] = get_positions(pair.data['Z-score'].dropna())
         pair.data['Signal'] = get_signals(pair.data['Position'])
     
-    capital = test(selected_pairs)
-    print(capital)
-    """
-        continue # not stationary
-
-    print(f'Spread = {dependent_stock} - β * {independent_stock}, β = {best_hedge_ratio:.4f}')
-    pair_data['Z-score'] = get_z_score(pair_data['Spread'])
-    pair_data['Position'] = get_positions(pair_data['Z-score'].dropna())
-    pair_data['Signal'] = get_signals(pair_data['Position'])
-    pair_data['Capital'], pair_data['Invested'] = get_capital(pair_data[dependent_stock], pair_data[independent_stock],
-                                        pair_data['Position'], pair_data['Signal'], best_hedge_ratio)
-    
-    sharpe_ratio = get_sharpe_ratio(pair_data['Invested'])
-    roi = get_roi(pair_data['Capital'].iloc[-1])
-    
-    print(f'ROI: {roi:.2f}%, Sharpe Ratio: {sharpe_ratio:.4f}\n')
-    graph_pair_trades(stock1, stock2, pair_data)
-    """
+    backtest_results = perform_backtest(selected_pairs)
+    roi = get_roi(backtest_results.iloc[-1])
+    sharpe_ratio = get_sharpe_ratio(backtest_results)
+    print(f'Final ROI: {roi:.2f}%, Sharpe Ratio: {sharpe_ratio:.3f}\n')
 
 class Pair:
     def __init__(self, data, dependent_stock, independent_stock, hedge_ratio):

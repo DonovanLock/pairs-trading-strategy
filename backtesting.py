@@ -26,10 +26,10 @@ def enter_position(investment_sum, dependent_stock,
         short_entry_price = dependent_stock
     return long_shares, short_shares, short_entry_price
 
-def test(pairs):
+def perform_backtest(pairs):
     indexCheck = all(pair.data['Signal'].index.equals(pairs[0].data['Signal'].index) for pair in pairs[1:])
     if not indexCheck:
-        sys.exit("All spreads must have the same index for backtesting.") #this should never happen
+        sys.exit('All spreads must have the same index for backtesting.') #this should never happen
     
     for pair in pairs:
         pair.data['Invested'] = pd.Series(index=pair.data['Signal'].dropna().index, data=0)
@@ -116,3 +116,26 @@ def test(pairs):
         capital[i] = uninvested_capital + sum(pair.invested_capital for pair in pairs)
     
     return capital
+
+def get_sharpe_ratio(capital_series):
+    returns = capital_series.pct_change().dropna()
+    valid_returns = returns[(capital_series.shift(1) > 0) & (capital_series > 0)]
+    daily_risk_free_rate = RISK_FREE_RATE / ANNUAL_TRADING_DAYS
+    excess_returns = valid_returns - daily_risk_free_rate
+    mean_return = excess_returns.mean()
+    stdev_return = excess_returns.std()
+
+    if stdev_return == 0:
+        if mean_return > 0:
+            return float('inf')
+        elif mean_return == 0:
+            return 0.0
+        else:
+            return float('-inf')
+
+    sharpe_ratio = (ANNUAL_TRADING_DAYS ** 0.5) * mean_return / stdev_return
+
+    return sharpe_ratio
+
+def get_roi(ending_capital):
+    return (ending_capital - STARTING_CAPITAL) / STARTING_CAPITAL * 100
