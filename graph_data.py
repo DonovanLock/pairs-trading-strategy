@@ -1,9 +1,11 @@
+from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
+import pandas as pd
 from pathlib import Path
 
 from config import ENTRY_THRESHOLD, EXIT_THRESHOLD
 
-def graph_backtesting(backtesting_results):
+def graph_backtesting(backtesting_results: pd.DataFrame) -> None:
     fig = plt.figure()
     capital_graph = fig.add_subplot(111)
     capital_graph.plot(backtesting_results.index, backtesting_results['Capital'], label='Capital', color='blue')
@@ -21,7 +23,7 @@ def graph_backtesting(backtesting_results):
     save_graph('backtesting_results')
     plt.show()
 
-def graph_pair_trade(stock1, stock2, pair_data):
+def graph_pair_trade(stock1: str, stock2: str, pair_data: pd.DataFrame) -> None:
     fig = plt.figure()
     z_score = pair_data['Z-score']
     start_date = z_score.first_valid_index()
@@ -31,7 +33,7 @@ def graph_pair_trade(stock1, stock2, pair_data):
     fig.tight_layout()
     save_graph(f'graphs_{stock1}_{stock2}')
 
-def graph_stocks(fig, stock1, stock2, pair_data, start_date):
+def graph_stocks(fig: Figure, stock1: str, stock2: str, pair_data: pd.DataFrame, start_date: pd.Timestamp) -> None:
     pair_graph = fig.add_subplot(311)
     pair_graph.plot(pair_data[stock1].index, pair_data[stock1].values, label=stock1, color='blue')
     pair_graph.plot(pair_data[stock2].index, pair_data[stock2].values, label=stock2, color='orange')
@@ -40,7 +42,7 @@ def graph_stocks(fig, stock1, stock2, pair_data, start_date):
     plt.legend()
     plt.xticks(rotation=30)
 
-def graph_z_score(fig, z_score, start_date):
+def graph_z_score(fig: Figure, z_score: pd.Series, start_date: pd.Timestamp) -> None:
     z_score_graph = fig.add_subplot(312)
     z_score_graph.set_xlim([start_date, z_score.index[-1]])
     z_score_graph_bound = z_score.abs().max() * 1.1
@@ -54,7 +56,7 @@ def graph_z_score(fig, z_score, start_date):
     plt.title('Z-score')
     plt.xticks(rotation=30)
 
-def graph_capital(fig, pair_data, start_date):
+def graph_capital(fig: Figure, pair_data: pd.DataFrame, start_date: pd.Timestamp) -> None:
     capital_graph = fig.add_subplot(313)
     capital = pair_data['Capital']
     capital_graph.plot(capital.index, capital.values, label='Capital', color='green')
@@ -62,7 +64,7 @@ def graph_capital(fig, pair_data, start_date):
     plt.title('Capital')
     plt.xticks(rotation=30)
 
-def save_graph(name):
+def save_graph(name: str) -> None:
     working_directory = Path(__file__).parent
     graph_file_name = working_directory / 'output' / name
     plt.savefig(graph_file_name)

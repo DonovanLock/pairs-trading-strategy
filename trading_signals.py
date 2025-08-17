@@ -1,5 +1,6 @@
-from enum import IntEnum
 import pandas as pd
+
+from enum import IntEnum
 
 from config import ENTRY_THRESHOLD, EXIT_THRESHOLD
 
@@ -17,7 +18,7 @@ class Signal(IntEnum):
     EXIT_LONG_AND_ENTER_SHORT = 3
     EXIT_SHORT_AND_ENTER_LONG = -3
 
-def classify_position(position, previous_z_score, current_z_score):
+def classify_position(position: Position, previous_z_score: float, current_z_score: float) -> Position:
     new_position = position
     if position == Position.FLAT:
         if current_z_score <= -ENTRY_THRESHOLD < previous_z_score:
@@ -43,7 +44,7 @@ def classify_position(position, previous_z_score, current_z_score):
 
     return Position(new_position)
 
-def get_positions(z_score):
+def get_positions(z_score: pd.Series) -> pd.Series:
     z_score_entries = z_score.dropna()
     positions = pd.Series(data=Position(0).name, index=z_score_entries.index, dtype=object)
     position = Position.FLAT
@@ -56,7 +57,7 @@ def get_positions(z_score):
 
     return positions
 
-def classify_signal(previous_position, current_position):
+def classify_signal(previous_position: Position, current_position: Position) -> Signal:
 
     if previous_position == current_position:
         return Signal.NONE
@@ -76,7 +77,7 @@ def classify_signal(previous_position, current_position):
         else:
             return Signal.EXIT_SHORT_AND_ENTER_LONG
 
-def get_signals(positions):
+def get_signals(positions: pd.Series) -> pd.Series:
     position_entries = positions.dropna()
     signals = pd.Series(data=Signal(0).name, index=position_entries.index)
 

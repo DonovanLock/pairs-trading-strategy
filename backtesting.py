@@ -1,21 +1,23 @@
-import sys
 import pandas as pd
+import sys
 
 from config import ANNUAL_TRADING_DAYS, PORTFOLIO_PORTION_INVESTED_PER_TRADE, RISK_FREE_RATE, STARTING_CAPITAL
+from pair import Pair
 from trading_signals import Position, Signal
 
 #reminder: dependent stock - hedge ratio * independent stock = stationary spread
 #z_score < -ENTRY_THRESHOLD -> go long on spread -> buy dependent stock, sell independent stock
 #z_score > ENTRY_THRESHOLD -> go short on spread -> sell dependent stock, buy independent stock
 
-def get_invested_capital(long_stock, short_stock, long_shares,
-                         short_shares, short_entry_price):
+def get_invested_capital(long_stock: float, short_stock: float, long_shares: float,
+                         short_shares: float, short_entry_price: float) -> float:
     long_market_value = long_stock * long_shares
     short_market_value = ((2 * short_entry_price) - short_stock) * short_shares
     return long_market_value + short_market_value
 
-def enter_position(investment_sum, dependent_stock,
-                   independent_stock, hedge_ratio, signal):
+def enter_position(investment_sum: float, dependent_stock: float,
+                   independent_stock: float, hedge_ratio: float,
+                   signal: Signal) -> tuple[float, float, float]:
     if signal == Signal.ENTER_LONG or signal == Signal.EXIT_SHORT_AND_ENTER_LONG:
         long_shares = investment_sum / (dependent_stock + hedge_ratio * independent_stock)
         short_shares = hedge_ratio * long_shares
@@ -26,8 +28,8 @@ def enter_position(investment_sum, dependent_stock,
         short_entry_price = dependent_stock
     return long_shares, short_shares, short_entry_price
 
-def perform_backtest(pairs):
-    if not all(pair.data['Signal'].index.equals(pairs[0].data['Signal'].index) for pair in pairs[1:]): #this should never happenx
+def perform_backtest(pairs: list[Pair]) -> pd.DataFrame:
+    if not all(pair.data['Signal'].index.equals(pairs[0].data['Signal'].index) for pair in pairs[1:]): #this should never happen
         sys.exit('All spreads must have the same index for backtesting.')
     
     for pair in pairs:
@@ -127,7 +129,7 @@ def perform_backtest(pairs):
     
     return backtesting
 
-def get_sharpe_ratio(capital_series):
+def get_sharpe_ratio(capital_series: pd.Series) -> float:
     returns = capital_series.pct_change().dropna()
     valid_returns = returns[(capital_series.shift(1) > 0) & (capital_series > 0)]
     daily_risk_free_rate = RISK_FREE_RATE / ANNUAL_TRADING_DAYS
@@ -147,5 +149,5 @@ def get_sharpe_ratio(capital_series):
 
     return sharpe_ratio
 
-def get_roi(ending_capital):
+def get_roi(ending_capital: float) -> float:
     return (ending_capital - STARTING_CAPITAL) / STARTING_CAPITAL * 100

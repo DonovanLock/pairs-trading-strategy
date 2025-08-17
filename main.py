@@ -1,14 +1,16 @@
 import sys
+
 from backtesting import get_roi, get_sharpe_ratio, perform_backtest
 from fetch_data import get_best_spread, get_cointegrated_pairs, get_correlated_pairs, get_hedge_ratios, get_market_data, get_returns, get_z_score
-from graph_data import graph_backtesting, graph_pair_trade
+from graph_data import graph_backtesting
+from pair import Pair
 from tickers import TICKERS
 from trading_signals import get_positions, get_signals
 
 #after implementing backtesting:
 #tune several parameters and gauge sharpe ratio to select best combination
 
-def main():
+def main() -> None:
     market_data = get_market_data(TICKERS)
     market_returns = get_returns(market_data)
     correlated_pairs = get_correlated_pairs(market_returns) # this ensures all hedge ratios are positive
@@ -34,17 +36,6 @@ def main():
     sharpe_ratio = get_sharpe_ratio(backtesting_results['Capital'])
     print(f'Final ROI: {roi:.2f}%, Sharpe Ratio: {sharpe_ratio:.3f}\n')
     graph_backtesting(backtesting_results)
-
-class Pair:
-    def __init__(self, data, dependent_stock, independent_stock, hedge_ratio):
-        self.data = data
-        self.dependent_stock = dependent_stock
-        self.independent_stock = independent_stock
-        self.hedge_ratio = hedge_ratio
-        self.invested_capital = 0
-        self.long_shares = 0
-        self.short_shares = 0
-        self.short_entry_price = 0
 
 if __name__ == '__main__':
     main()

@@ -1,14 +1,15 @@
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
-from statsmodels.tsa.stattools import adfuller, coint
 import sys
 import yfinance as yf
+
+from statsmodels.tsa.stattools import adfuller, coint
 
 from config import COINTEGRATION_THRESHOLD, CORRELATION_THRESHOLD, ROLLING_WINDOW
 from utils import get_upper_triangle_of_matrix
 
-def get_market_data(tickers):
+def get_market_data(tickers: list[str]) -> pd.DataFrame:
     historic_data = yf.download(tickers=tickers, period='3y', auto_adjust=False, progress=False)
 
     failed_tickers = list(yf.shared._ERRORS.keys())
@@ -23,11 +24,11 @@ def get_market_data(tickers):
 
     return adjusted_data
 
-def get_returns(adjusted_data):
+def get_returns(adjusted_data: pd.DataFrame) -> pd.DataFrame:
     returns = np.log(adjusted_data / adjusted_data.shift(1)).dropna()
     return returns
 
-def get_correlated_pairs(returns):
+def get_correlated_pairs(returns: pd.DataFrame) -> list[tuple[str, str]]:
     correlation_matrix = returns.corr(method='pearson')
     triangular_matrix = get_upper_triangle_of_matrix(correlation_matrix)
     pairs = triangular_matrix.stack()
@@ -35,7 +36,7 @@ def get_correlated_pairs(returns):
 
     return correlated_pairs
 
-def get_cointegrated_pairs(correlated_pairs, market_data):
+def get_cointegrated_pairs(correlated_pairs: list[tuple[str, str]], market_data: pd.DataFrame) -> list[tuple[list[str], pd.DataFrame]]:
     # list of cointegrated pairs and a cleaned dataframe containing their returns
     cointegrated_pairs = []
     for pair in correlated_pairs:
@@ -58,7 +59,7 @@ def get_cointegrated_pairs(correlated_pairs, market_data):
 
     return cointegrated_pairs
 
-def calculate_hedge_ratio(dependent_stock, independent_stock):
+def calculate_hedge_ratio(dependent_stock: pd.Series, independent_stock: pd.Series) -> float:
     X = sm.add_constant(independent_stock)
     model = sm.OLS(dependent_stock, X).fit()
 
@@ -69,14 +70,14 @@ def calculate_hedge_ratio(dependent_stock, independent_stock):
 
     return hedge_ratio
 
-def get_hedge_ratios(stock1_data, stock2_data):
+def get_hedge_ratios(stock1_data: pd.Series, stock2_data: pd.Series) -> tuple[float, float]:
 
     beta1 = calculate_hedge_ratio(stock1_data, stock2_data)
     beta2 = calculate_hedge_ratio(stock2_data, stock1_data)    
 
     return beta1, beta2
 
-def get_best_spread(stock1, stock2, pair_data, hedge_ratios):
+def get_best_spread(stock1: str, stock2: str, pair_data: pd.DataFrame, hedge_ratios: tuple[float, float]) -> tuple[pd.Series, float, float, str, str]:
 
     spread1 = pair_data[stock1] - hedge_ratios[0] * pair_data[stock2]
     spread2 = pair_data[stock2] - hedge_ratios[1] * pair_data[stock1]
@@ -89,7 +90,7 @@ def get_best_spread(stock1, stock2, pair_data, hedge_ratios):
     else:
         return spread2, p_value2, hedge_ratios[1], stock2, stock1
 
-def get_z_score(spread):
+def get_z_score(spread: pd.Series) -> pd.Series:
     rolling_mean = spread.rolling(window=ROLLING_WINDOW).mean()
     rolling_stdev = spread.rolling(window=ROLLING_WINDOW).std()
     z_score = (spread - rolling_mean) / rolling_stdev
