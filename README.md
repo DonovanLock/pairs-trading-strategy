@@ -22,7 +22,8 @@ to its mean. Naturally, we short the spread when its price is sufficiently great
 we symmetrically enter a long position when it is less than the mean.
 
 Due to the fact that this technique has a relatively simple methodology (and generates trading signals
-without too much computation), we can implement backtesting extremely easily. This demonstrates how
-the trading strategy would have performed if it were in use over the past few years.
+without too much computation), we can manage a portfolio of many such pairs, and implement backtesting
+extremely easily. This demonstrates how the trading strategy would have performed if it were in use
+over the past few years.
 
-![Graphs of pairs trading results using Ford and General Motors stocks](/example_graphs.png)
+![Graphs of pairs trading results](/example_graph.png)

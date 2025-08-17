@@ -27,19 +27,21 @@ def enter_position(investment_sum, dependent_stock,
     return long_shares, short_shares, short_entry_price
 
 def perform_backtest(pairs):
-    indexCheck = all(pair.data['Signal'].index.equals(pairs[0].data['Signal'].index) for pair in pairs[1:])
-    if not indexCheck:
-        sys.exit('All spreads must have the same index for backtesting.') #this should never happen
+    if not all(pair.data['Signal'].index.equals(pairs[0].data['Signal'].index) for pair in pairs[1:]): #this should never happenx
+        sys.exit('All spreads must have the same index for backtesting.')
     
     for pair in pairs:
         pair.data['Invested'] = pd.Series(index=pair.data['Signal'].dropna().index, data=0)
 
-    capital = pd.Series(index=pairs[0].data['Signal'].dropna().index)
+    backtesting = pd.DataFrame(index=pairs[0].data['Signal'].dropna().index)
+    backtesting['Capital'] = pd.Series(index=backtesting.index, dtype=float)
+    backtesting['Entries'] = 0
+    backtesting['Exits'] = 0
     uninvested_capital = STARTING_CAPITAL
-    for i in capital.index:
-        # update invested capital for each pair
-        # calculate total capital
+
+    for i in backtesting.index:
         for pair in pairs:
+
             position = Position[pair.data['Position'][i]]
             signal = Signal[pair.data['Signal'][i]]
             dependent_stock_price = pair.data[pair.dependent_stock][i]
@@ -63,6 +65,7 @@ def perform_backtest(pairs):
                                                                           independent_stock_price, pair.hedge_ratio, signal)
                 pair.invested_capital = investment_sum
                 uninvested_capital -= investment_sum
+                backtesting.loc[i, 'Entries'] += 1
             
             elif signal == Signal.ENTER_SHORT:
                 investment_sum = PORTFOLIO_PORTION_INVESTED_PER_TRADE * uninvested_capital
@@ -70,6 +73,7 @@ def perform_backtest(pairs):
                                                                           independent_stock_price, pair.hedge_ratio, signal)
                 pair.invested_capital = investment_sum
                 uninvested_capital -= investment_sum
+                backtesting.loc[i, 'Entries'] += 1
             
             elif signal == Signal.EXIT_LONG:
                 pair.invested_capital = get_invested_capital(dependent_stock_price,
@@ -78,6 +82,7 @@ def perform_backtest(pairs):
                                                              pair.short_entry_price)
                 uninvested_capital += pair.invested_capital
                 pair.invested_capital = pair.long_shares = pair.short_shares = pair.short_entry_price = 0
+                backtesting.loc[i, 'Exits'] += 1
                 
             elif signal == Signal.EXIT_SHORT:
                 pair.invested_capital = get_invested_capital(independent_stock_price,
@@ -86,6 +91,7 @@ def perform_backtest(pairs):
                                                              pair.short_entry_price)
                 uninvested_capital += pair.invested_capital
                 pair.invested_capital = pair.long_shares = pair.short_shares = pair.short_entry_price = 0
+                backtesting.loc[i, 'Exits'] += 1
             
             elif signal == Signal.EXIT_LONG_AND_ENTER_SHORT:
                 pair.invested_capital = get_invested_capital(dependent_stock_price,
@@ -99,6 +105,8 @@ def perform_backtest(pairs):
                                                                           independent_stock_price, pair.hedge_ratio, signal)
                 pair.invested_capital = investment_sum
                 uninvested_capital -= investment_sum
+                backtesting.loc[i, 'Entries'] += 1
+                backtesting.loc[i, 'Exits'] += 1
             
             else:
                 pair.invested_capital = get_invested_capital(independent_stock_price,
@@ -112,10 +120,12 @@ def perform_backtest(pairs):
                                                                           independent_stock_price, pair.hedge_ratio, signal)
                 pair.invested_capital = investment_sum
                 uninvested_capital -= investment_sum
+                backtesting.loc[i, 'Entries'] += 1
+                backtesting.loc[i, 'Exits'] += 1
 
-        capital[i] = uninvested_capital + sum(pair.invested_capital for pair in pairs)
+        backtesting.loc[i, 'Capital'] = uninvested_capital + sum(pair.invested_capital for pair in pairs)
     
-    return capital
+    return backtesting
 
 def get_sharpe_ratio(capital_series):
     returns = capital_series.pct_change().dropna()
