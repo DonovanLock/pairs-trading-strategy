@@ -3,8 +3,14 @@ import pandas as pd
 import sys
 import yfinance as yf
 
-def get_market_data(tickers: list[str]) -> pd.DataFrame:
-    historic_data = yf.download(tickers=tickers, period='3y', auto_adjust=False, progress=False)
+from datetime import datetime, timedelta
+
+from tickers import TICKERS
+
+def get_market_data() -> pd.DataFrame:
+    start_date = datetime.now() - timedelta(days=6*365)
+
+    historic_data = yf.download(tickers=TICKERS, start=start_date, period='3y', auto_adjust=False, progress=False)
 
     failed_tickers = list(yf.shared._ERRORS.keys())
     if failed_tickers:
@@ -19,5 +25,11 @@ def get_market_data(tickers: list[str]) -> pd.DataFrame:
     return adjusted_data
 
 def get_returns(adjusted_data: pd.DataFrame) -> pd.DataFrame:
-    returns = np.log(adjusted_data / adjusted_data.shift(1)).dropna()
-    return returns
+    enough_trading_days = adjusted_data.notna().sum() > 700
+    active_market_data = adjusted_data.loc[:, enough_trading_days]
+
+    returns = np.log(active_market_data / active_market_data.shift(1)).dropna()
+    enough_moving_days = (returns != 0).sum() > 100
+    filtered_returns = returns.loc[:, enough_moving_days]
+
+    return filtered_returns

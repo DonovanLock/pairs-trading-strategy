@@ -78,7 +78,7 @@ def simulate_day(pair: Pair, date: pd.Timestamp, backtesting: pd.DataFrame, unin
 def perform_backtest(pairs: list[Pair]) -> pd.DataFrame:
     if not all(pair.data['Signal'].index.equals(pairs[0].data['Signal'].index) for pair in pairs[1:]): #this should never happen
         sys.exit('All spreads must have the same index for backtesting.')
-
+    
     backtesting = pd.DataFrame(index=pairs[0].data['Signal'].dropna().index)
     backtesting['Capital'] = pd.Series(index=backtesting.index, dtype=float)
     backtesting['Entries'] = 0
