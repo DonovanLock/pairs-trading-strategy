@@ -58,7 +58,6 @@ def get_positions(z_score: pd.Series) -> pd.Series:
     return positions
 
 def classify_signal(previous_position: Position, current_position: Position) -> Signal:
-
     if previous_position == current_position:
         return Signal.NONE
     elif previous_position == Position.FLAT:

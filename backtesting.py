@@ -16,8 +16,7 @@ def get_position_value(long_stock: float, short_stock: float, long_shares: float
     return long_market_value + short_market_value
 
 
-def update_invested_capital(pair: Pair, date: pd.Timestamp) -> None:
-    position = Position[pair.data['Position'][date]]
+def update_invested_capital(pair: Pair, date: pd.Timestamp, position: Position) -> None:
     if position == Position.LONG:
         pair.invested_capital = get_position_value(pair.data[pair.dependent_stock][date],
                                                    pair.data[pair.independent_stock][date],
@@ -57,7 +56,7 @@ def simulate_day(pair: Pair, date: pd.Timestamp, backtesting: pd.DataFrame, unin
 
     match (signal):
         case (Signal.NONE):
-            update_invested_capital(pair, date)
+            update_invested_capital(pair, date, Position[pair.data['Position'][date]])
             return uninvested_capital
 
         case (Signal.ENTER_LONG | Signal.ENTER_SHORT):
@@ -66,11 +65,11 @@ def simulate_day(pair: Pair, date: pd.Timestamp, backtesting: pd.DataFrame, unin
             return uninvested_capital - investment_sum
         
         case (Signal.EXIT_LONG | Signal.EXIT_SHORT):
-            update_invested_capital(pair, date)
+            update_invested_capital(pair, date, Position(signal / 2))
             return exit_position(pair, uninvested_capital, date, backtesting)
         
         case (Signal.EXIT_LONG_AND_ENTER_SHORT | Signal.EXIT_SHORT_AND_ENTER_LONG):
-            update_invested_capital(pair, date)
+            update_invested_capital(pair, date, Position(signal / 3))
             new_uninvested_capital = exit_position(pair, uninvested_capital, date, backtesting)
             investment_sum = PORTFOLIO_PORTION_INVESTED_PER_TRADE * new_uninvested_capital
             enter_position(investment_sum, pair, date, backtesting)
@@ -89,89 +88,6 @@ def perform_backtest(pairs: list[Pair]) -> pd.DataFrame:
     for i in backtesting.index:
         for pair in pairs:
             uninvested_capital = simulate_day(pair, i, backtesting, uninvested_capital)
-            """
-            position = Position[pair.data['Position'][i]]
-            signal = Signal[pair.data['Signal'][i]]
-            dependent_stock_price = pair.data[pair.dependent_stock][i]
-            independent_stock_price = pair.data[pair.independent_stock][i]
-
-            if signal == Signal.NONE:
-                if position == Position.LONG:
-                    pair.invested_capital = get_invested_capital(dependent_stock_price,
-                                                                 independent_stock_price,
-                                                                 pair.long_shares, pair.short_shares,
-                                                                 pair.short_entry_price)
-                elif position == Position.SHORT:
-                    pair.invested_capital = get_invested_capital(independent_stock_price,
-                                                                 dependent_stock_price,
-                                                                 pair.long_shares, pair.short_shares,
-                                                                 pair.short_entry_price)
-
-            elif signal == Signal.ENTER_LONG:
-                investment_sum = PORTFOLIO_PORTION_INVESTED_PER_TRADE * uninvested_capital
-                pair.long_shares, pair.short_shares, pair.short_entry_price = enter_position(investment_sum, dependent_stock_price,
-                                                                          independent_stock_price, pair.hedge_ratio, signal)
-                pair.invested_capital = investment_sum
-                uninvested_capital -= investment_sum
-                backtesting.loc[i, 'Entries'] += 1
-            
-            elif signal == Signal.ENTER_SHORT:
-                investment_sum = PORTFOLIO_PORTION_INVESTED_PER_TRADE * uninvested_capital
-                pair.long_shares, pair.short_shares, pair.short_entry_price = enter_position(investment_sum, dependent_stock_price,
-                                                                          independent_stock_price, pair.hedge_ratio, signal)
-                pair.invested_capital = investment_sum
-                uninvested_capital -= investment_sum
-                backtesting.loc[i, 'Entries'] += 1
-            
-            elif signal == Signal.EXIT_LONG:
-                pair.invested_capital = get_invested_capital(dependent_stock_price,
-                                                             independent_stock_price,
-                                                             pair.long_shares, pair.short_shares,
-                                                             pair.short_entry_price)
-                uninvested_capital += pair.invested_capital
-                pair.invested_capital = pair.long_shares = pair.short_shares = pair.short_entry_price = 0
-                backtesting.loc[i, 'Exits'] += 1
-                
-            elif signal == Signal.EXIT_SHORT:
-                pair.invested_capital = get_invested_capital(independent_stock_price,
-                                                             dependent_stock_price,
-                                                             pair.long_shares, pair.short_shares,
-                                                             pair.short_entry_price)
-                uninvested_capital += pair.invested_capital
-                pair.invested_capital = pair.long_shares = pair.short_shares = pair.short_entry_price = 0
-                backtesting.loc[i, 'Exits'] += 1
-            
-            elif signal == Signal.EXIT_LONG_AND_ENTER_SHORT:
-                pair.invested_capital = get_invested_capital(dependent_stock_price,
-                                                             independent_stock_price,
-                                                             pair.long_shares, pair.short_shares,
-                                                             pair.short_entry_price)
-                uninvested_capital += pair.invested_capital
-                
-                investment_sum = PORTFOLIO_PORTION_INVESTED_PER_TRADE * uninvested_capital
-                pair.long_shares, pair.short_shares, pair.short_entry_price = enter_position(investment_sum, dependent_stock_price,
-                                                                          independent_stock_price, pair.hedge_ratio, signal)
-                pair.invested_capital = investment_sum
-                uninvested_capital -= investment_sum
-                backtesting.loc[i, 'Entries'] += 1
-                backtesting.loc[i, 'Exits'] += 1
-            
-            else:
-                pair.invested_capital = get_invested_capital(independent_stock_price,
-                                                             dependent_stock_price,
-                                                             pair.long_shares, pair.short_shares,
-                                                             pair.short_entry_price)
-                uninvested_capital += pair.invested_capital
-                
-                investment_sum = PORTFOLIO_PORTION_INVESTED_PER_TRADE * uninvested_capital
-                pair.long_shares, pair.short_shares, pair.short_entry_price = enter_position(investment_sum, dependent_stock_price,
-                                                                          independent_stock_price, pair.hedge_ratio, signal)
-                pair.invested_capital = investment_sum
-                uninvested_capital -= investment_sum
-                backtesting.loc[i, 'Entries'] += 1
-                backtesting.loc[i, 'Exits'] += 1
-            """
-            
         backtesting.loc[i, 'Capital'] = uninvested_capital + sum(pair.invested_capital for pair in pairs)
 
     return backtesting

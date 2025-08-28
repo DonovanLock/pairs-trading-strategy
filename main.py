@@ -1,12 +1,9 @@
-import sys
-
 from backtesting import get_roi, get_sharpe_ratio, perform_backtest
 from fetch_data import get_market_data, get_returns
 from graph_data import graph_backtesting
-from pair import Pair
 from tickers import TICKERS
 from trading_signals import get_positions, get_signals
-from validate_pairs import get_best_spread, get_cointegrated_pairs, get_correlated_pairs, get_hedge_ratios, get_selected_pairs, get_z_score
+from validate_pairs import get_cointegrated_pairs, get_correlated_pairs, get_selected_pairs, get_z_score
 
 #after implementing backtesting:
 #tune several parameters and gauge sharpe ratio to select best combination
@@ -27,7 +24,7 @@ def main() -> None:
     roi = get_roi(backtesting_results['Capital'].iloc[-1])
     sharpe_ratio = get_sharpe_ratio(backtesting_results['Capital'])
     print(f'\nFinal ROI: {roi:.2f}%, Sharpe Ratio: {sharpe_ratio:.3f}\n')
-    print(pair.data[['Position', 'Signal']].dropna().to_string())
+
     graph_backtesting(backtesting_results)
 
 if __name__ == '__main__':

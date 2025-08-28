@@ -3,9 +3,10 @@ import pandas as pd
 import statsmodels.api as sm
 import sys
 
+from statsmodels.tsa.stattools import adfuller, coint
+
 from config import COINTEGRATION_THRESHOLD, CORRELATION_THRESHOLD, ROLLING_WINDOW
 from pair import Pair
-from statsmodels.tsa.stattools import adfuller, coint
 from utils import get_upper_triangle_of_matrix
 
 
