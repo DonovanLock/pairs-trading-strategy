@@ -1,6 +1,7 @@
-from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import pandas as pd
+
+from matplotlib.figure import Figure
 from pathlib import Path
 
 from config import ENTRY_THRESHOLD, EXIT_THRESHOLD
@@ -20,6 +21,7 @@ def graph_backtesting(backtesting_results: pd.DataFrame) -> None:
     capital_graph.scatter(backtesting_results['Exits'][exit_signals_filter].index, backtesting_results['Capital'][exit_signals_filter], marker='+', color='red', label='Exit Signal', alpha=0.5)
     plt.xticks(rotation=30)
     plt.legend()
+    fig.tight_layout()
     save_graph('backtesting_results')
     plt.show()
 
