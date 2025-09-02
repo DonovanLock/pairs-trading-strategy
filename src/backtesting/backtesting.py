@@ -1,9 +1,9 @@
 import pandas as pd
 import sys
 
-from config import ANNUAL_TRADING_DAYS, PORTFOLIO_PORTION_INVESTED_PER_TRADE, RISK_FREE_RATE, STARTING_CAPITAL
-from pair import Pair
-from trading_signals import Position, Signal
+from data.config import ANNUAL_TRADING_DAYS, PORTFOLIO_PORTION_INVESTED_PER_TRADE, RISK_FREE_RATE, STARTING_CAPITAL
+from pairs.pair import Pair
+from backtesting.trading_signals import Position, Signal
 
 #reminder: dependent stock - hedge ratio * independent stock = stationary spread
 #z_score < -ENTRY_THRESHOLD -> go long on spread -> buy dependent stock, sell independent stock

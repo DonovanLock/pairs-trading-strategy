@@ -5,9 +5,9 @@ import sys
 
 from statsmodels.tsa.stattools import adfuller, coint
 
-from config import COINTEGRATION_THRESHOLD, CORRELATION_THRESHOLD, ROLLING_WINDOW
-from pair import Pair
-from utils import get_upper_triangle_of_matrix
+from data.config import COINTEGRATION_THRESHOLD, CORRELATION_THRESHOLD, ROLLING_WINDOW
+from pairs.pair import Pair
+from utils.utils import get_upper_triangle_of_matrix
 
 
 def get_correlated_pairs(returns: pd.DataFrame) -> list[tuple[str, str]]:

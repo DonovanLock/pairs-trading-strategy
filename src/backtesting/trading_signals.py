@@ -2,7 +2,7 @@ import pandas as pd
 
 from enum import IntEnum
 
-from config import ENTRY_THRESHOLD, EXIT_THRESHOLD
+from data.config import ENTRY_THRESHOLD, EXIT_THRESHOLD
 
 class Position(IntEnum):
     FLAT = 0

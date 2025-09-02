@@ -24,6 +24,6 @@ def graph_backtesting(backtesting_results: pd.DataFrame) -> None:
     plt.show()
 
 def save_graph(name: str) -> None:
-    working_directory = Path(__file__).parent
+    working_directory = Path(__file__).parent.parent.parent
     graph_file_name = working_directory / 'output' / name
     plt.savefig(graph_file_name)

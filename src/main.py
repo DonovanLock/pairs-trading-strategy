@@ -1,8 +1,8 @@
-from backtesting import get_roi, get_sharpe_ratio, perform_backtest
-from fetch_data import get_historic_data, get_returns, update_for_backtesting
-from graph_data import graph_backtesting
-from trading_signals import get_positions, get_signals
-from validate_pairs import get_cointegrated_pairs, get_correlated_pairs, get_selected_pairs, get_z_score
+from backtesting.graph_data import graph_backtesting
+from backtesting.trading_signals import get_positions, get_signals
+from backtesting.backtesting import get_roi, get_sharpe_ratio, perform_backtest
+from pairs.fetch_data import get_historic_data, get_returns, update_for_backtesting
+from pairs.validate_pairs import get_cointegrated_pairs, get_correlated_pairs, get_selected_pairs, get_z_score
 
 #after implementing backtesting:
 #tune several parameters and gauge sharpe ratio to select best combination

@@ -5,8 +5,8 @@ import yfinance as yf
 
 from datetime import datetime, timedelta
 
-from pair import Pair
-from tickers import TICKERS
+from pairs.pair import Pair
+from data.tickers import TICKERS
 
 def get_market_data(tickers: list[str], end_date: datetime) -> pd.DataFrame:
     market_data = yf.download(tickers=tickers, end=end_date, period='3y', auto_adjust=False, progress=False)
