@@ -1,7 +1,6 @@
 from backtesting import get_roi, get_sharpe_ratio, perform_backtest
-from fetch_data import get_market_data, get_returns
+from fetch_data import get_historic_data, get_returns, update_for_backtesting
 from graph_data import graph_backtesting
-from tickers import TICKERS
 from trading_signals import get_positions, get_signals
 from validate_pairs import get_cointegrated_pairs, get_correlated_pairs, get_selected_pairs, get_z_score
 
@@ -9,13 +8,14 @@ from validate_pairs import get_cointegrated_pairs, get_correlated_pairs, get_sel
 #tune several parameters and gauge sharpe ratio to select best combination
 
 def main() -> None:
-    market_data = get_market_data(TICKERS)
+    market_data = get_historic_data()
     market_returns = get_returns(market_data)
     correlated_pairs = get_correlated_pairs(market_returns) # this ensures all hedge ratios are positive
     cointegrated_pairs_data = get_cointegrated_pairs(correlated_pairs, market_data)
     selected_pairs = get_selected_pairs(cointegrated_pairs_data)
 
     for pair in selected_pairs:
+        update_for_backtesting(pair)
         pair.data['Z-score'] = get_z_score(pair.data['Spread'])
         pair.data['Position'] = get_positions(pair.data['Z-score'].dropna())
         pair.data['Signal'] = get_signals(pair.data['Position'])

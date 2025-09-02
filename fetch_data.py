@@ -3,21 +3,50 @@ import pandas as pd
 import sys
 import yfinance as yf
 
-def get_market_data(tickers: list[str]) -> pd.DataFrame:
-    historic_data = yf.download(tickers=tickers, period='3y', auto_adjust=False, progress=False)
+from datetime import datetime, timedelta
+
+from pair import Pair
+from tickers import TICKERS
+
+def get_market_data(tickers: list[str], end_date: datetime) -> pd.DataFrame:
+    market_data = yf.download(tickers=tickers, end=end_date, period='3y', auto_adjust=False, progress=False)
 
     failed_tickers = list(yf.shared._ERRORS.keys())
     if failed_tickers:
         sys.exit('Failed to download market data for: ' + str(failed_tickers))
-
-    # for this to work with a vpn, i need to switch country every time it runs?
-    if 'Adj Close' in historic_data.columns:
-        adjusted_data = historic_data['Adj Close']
+    
+    if 'Adj Close' in market_data.columns:
+        adjusted_data = market_data['Adj Close']
     else:
-        adjusted_data = historic_data['Close']
+        adjusted_data = market_data['Close']
 
     return adjusted_data
 
+def get_historic_data() -> pd.DataFrame:
+    end_date = datetime.now() - timedelta(days=3*365)
+    historic_data = get_market_data(TICKERS, end_date)
+
+    return historic_data
+
+def get_backtesting_data(dependent_stock: str, independent_stock: str) -> pd.DataFrame:
+    current_date = datetime.now()
+    backtesting_data = get_market_data([dependent_stock, independent_stock], current_date)
+    
+    return backtesting_data
+
 def get_returns(adjusted_data: pd.DataFrame) -> pd.DataFrame:
-    returns = np.log(adjusted_data / adjusted_data.shift(1)).dropna()
-    return returns
+    enough_trading_days = adjusted_data.notna().sum() > 700
+    active_market_data = adjusted_data.loc[:, enough_trading_days]
+
+    returns = np.log(active_market_data / active_market_data.shift(1)).dropna()
+    enough_moving_days = (returns != 0).sum() > 100
+    filtered_returns = returns.loc[:, enough_moving_days]
+
+    return filtered_returns
+
+def update_for_backtesting(pair: Pair) -> None:
+    backtesting_prices = get_backtesting_data(pair.dependent_stock, pair.independent_stock)
+    pair.data = pair.data.reindex(backtesting_prices.index)
+    pair.data[pair.dependent_stock] = backtesting_prices[pair.dependent_stock]
+    pair.data[pair.independent_stock] = backtesting_prices[pair.independent_stock]
+    pair.data['Spread'] = pair.data[pair.dependent_stock] - pair.hedge_ratio * pair.data[pair.independent_stock]
