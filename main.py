@@ -16,12 +16,9 @@ def main() -> None:
 
     for pair in selected_pairs:
         update_for_backtesting(pair)
-        #DEBUG HERE
-        #spread is correct, but z-score does not calculate as expected
         pair.data['Z-score'] = get_z_score(pair.data['Spread'])
         pair.data['Position'] = get_positions(pair.data['Z-score'].dropna())
         pair.data['Signal'] = get_signals(pair.data['Position'])
-        #print(f'Selected pair: {pair.dependent_stock} and {pair.independent_stock}')
 
     backtesting_results = perform_backtest(selected_pairs)
     roi = get_roi(backtesting_results['Capital'].iloc[-1])
