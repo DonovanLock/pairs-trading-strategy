@@ -1,5 +1,5 @@
 from backtesting import get_roi, get_sharpe_ratio, perform_backtest
-from fetch_data import get_backtesting_spread, get_historic_data, get_returns
+from fetch_data import get_historic_data, get_returns, update_for_backtesting
 from graph_data import graph_backtesting
 from trading_signals import get_positions, get_signals
 from validate_pairs import get_cointegrated_pairs, get_correlated_pairs, get_selected_pairs, get_z_score
@@ -15,9 +15,7 @@ def main() -> None:
     selected_pairs = get_selected_pairs(cointegrated_pairs_data)
 
     for pair in selected_pairs:
-        backtesting_spread = get_backtesting_spread(pair)
-        pair.data = pair.data.reindex(backtesting_spread.index)  # align indices
-        pair.data['Spread'] = backtesting_spread
+        update_for_backtesting(pair)
         #DEBUG HERE
         #spread is correct, but z-score does not calculate as expected
         pair.data['Z-score'] = get_z_score(pair.data['Spread'])

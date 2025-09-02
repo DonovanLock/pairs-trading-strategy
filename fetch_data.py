@@ -28,7 +28,7 @@ def get_historic_data() -> pd.DataFrame:
 
     return historic_data
 
-def get_backtesting_data(dependent_stock: str, independent_stock: str) -> pd.Series:
+def get_backtesting_data(dependent_stock: str, independent_stock: str) -> pd.DataFrame:
     current_date = datetime.now()
     backtesting_data = get_market_data([dependent_stock, independent_stock], current_date)
     
@@ -44,8 +44,9 @@ def get_returns(adjusted_data: pd.DataFrame) -> pd.DataFrame:
 
     return filtered_returns
 
-def get_backtesting_spread(pair: Pair) -> pd.Series:
-    backtesting_data = get_backtesting_data(pair.independent_stock, pair.dependent_stock)
-    backtesting_spread = backtesting_data[pair.dependent_stock] - pair.hedge_ratio * backtesting_data[pair.independent_stock]
-
-    return backtesting_spread.replace([np.inf, -np.inf], np.nan).dropna()
+def update_for_backtesting(pair: Pair) -> None:
+    backtesting_prices = get_backtesting_data(pair.dependent_stock, pair.independent_stock)
+    pair.data = pair.data.reindex(backtesting_prices.index)
+    pair.data[pair.dependent_stock] = backtesting_prices[pair.dependent_stock]
+    pair.data[pair.independent_stock] = backtesting_prices[pair.independent_stock]
+    pair.data['Spread'] = pair.data[pair.dependent_stock] - pair.hedge_ratio * pair.data[pair.independent_stock]
