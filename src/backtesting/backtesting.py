@@ -1,5 +1,6 @@
 import pandas as pd
-import sys
+
+from functools import reduce
 
 from data.config import ANNUAL_TRADING_DAYS, PORTFOLIO_PORTION_INVESTED_PER_TRADE, RISK_FREE_RATE, STARTING_CAPITAL
 from pairs.pair import Pair
@@ -52,7 +53,10 @@ def exit_position(pair: Pair, uninvested_capital: float, date: pd.Timestamp, bac
     return new_uninvested_capital
 
 def simulate_day(pair: Pair, date: pd.Timestamp, backtesting: pd.DataFrame, uninvested_capital: float) -> float:
-    signal = Signal[pair.data['Signal'][date]]
+    try:
+        signal = Signal[pair.data['Signal'][date]]
+    except KeyError:
+        return uninvested_capital
 
     match (signal):
         case (Signal.NONE):
@@ -76,10 +80,7 @@ def simulate_day(pair: Pair, date: pd.Timestamp, backtesting: pd.DataFrame, unin
             return new_uninvested_capital - investment_sum
 
 def perform_backtest(pairs: list[Pair]) -> pd.DataFrame:
-    if not all(pair.data['Signal'].index.equals(pairs[0].data['Signal'].index) for pair in pairs[1:]): #this should never happen
-        sys.exit('All spreads must have the same index for backtesting.')
-    
-    backtesting = pd.DataFrame(index=pairs[0].data['Signal'].dropna().index)
+    backtesting = pd.DataFrame(index=reduce(lambda x, y: x.union(y), [pair.data['Signal'].dropna().index for pair in pairs]))#pairs[0].data['Signal'].dropna().index)
     backtesting['Capital'] = pd.Series(index=backtesting.index, dtype=float)
     backtesting['Entries'] = 0
     backtesting['Exits'] = 0
