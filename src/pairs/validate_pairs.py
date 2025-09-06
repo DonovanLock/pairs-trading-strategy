@@ -5,7 +5,7 @@ import sys
 
 from statsmodels.tsa.stattools import adfuller, coint
 
-from data.config import COINTEGRATION_THRESHOLD, CORRELATION_THRESHOLD, ROLLING_WINDOW
+from data.config import COINTEGRATION_THRESHOLD, CORRELATION_THRESHOLD, ROLLING_WINDOW, STATIONARY_TEST_THRESHOLD
 from pairs.pair import Pair
 from utils.utils import get_upper_triangle_of_matrix
 
@@ -84,7 +84,7 @@ def get_selected_pairs(cointegrated_pairs_data: list[tuple[tuple[str, str], pd.D
     for [[stock1, stock2], pair_data] in cointegrated_pairs_data:
         hedge_ratios = get_hedge_ratios(pair_data[stock1], pair_data[stock2])
         pair_data['Spread'], best_p_value, best_hedge_ratio, dependent_stock, independent_stock = get_best_spread(stock1, stock2, pair_data, hedge_ratios)
-        if best_p_value <= 0.05:
+        if best_p_value <= STATIONARY_TEST_THRESHOLD:
             selected_pairs.append(Pair(pair_data, dependent_stock, independent_stock, best_hedge_ratio))
     
     if not selected_pairs:
